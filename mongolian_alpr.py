@@ -15,8 +15,9 @@ class MongolianPlateRecognizer:
         # EasyOCR: Англи, Монгол (Кириллийн) хэлийг дэмжих
         self.reader = easyocr.Reader(['en', 'mn'], gpu=False)
         
-        # Монгол дугаарын pattern: 4 цифр + 3 Кириллийн үсэг
-        # Жишээ: 1234УБЗ, 5678ХОХ гэх мэт
+        # Монгол дугаарын pattern: 4 цифр + 3 Кириллийн үсэг ЗӨВХӨН
+        # Жишээ: 1234УБЗ ✓, 5678ХОХ ✓
+        # Татгалзах: 1234OBZ ✗ (Latin үсэг), ABC1234 ✗ (буруу дараалал)
         self.plate_pattern = re.compile(r'(\d{4})\s*([А-ЯӨҮ]{3})', re.IGNORECASE)
     
     def detect_plate_region(self, frame):
@@ -49,28 +50,16 @@ class MongolianPlateRecognizer:
         return plate_denoised
     
     def is_valid_mongol_plate(self, text):
-        """Монгол дугаарын формат эсэхийг шалгах (1234УБЗ)"""
-        # Цэвэрлэх: зай, тусгаарлагч, гадны үсэг арилгах
-        clean_text = re.sub(r'[^0-9А-ЯӨҮ]', '', text.upper())
+        """Монгол дугаарын формат эсэхийг шалгах (1234УБЗ) - ЗӨВХӨН КИРИЛЛИЙН ҮСЭ"""
+        upper_text = text.upper()
         
-        # Хүүхлийн үсгүүдийг Монгол кириллээр сольж өгөх
-        cyrillic_map = {
-            'O': 'О',  
-            'P': 'Р',
-            'C': 'С',
-            'B': 'В',
-            'A': 'А',
-            'E': 'Е',
-            'M': 'М',
-            'H': 'Н',
-            'X': 'Х',
-            'K': 'К',
-            'T': 'Т',
-            'Y': 'У',
-        }
+        # ⚠️ ХАТУУ ХЯНАЛТ: Latin үсэг байгаа эсэхийг шалгах (O, P, C, B, A, E, M, H, X, K, T, Y)
+        # Хэрэв Latin үсэг байгаа бол шууд ТАТГАЛЗАХ
+        if re.search(r'[A-Z]', upper_text):
+            return '', False  # Latin үсэг илэрлээ - ЦУЦЛАХ! ❌
         
-        for eng, cyr in cyrillic_map.items():
-            clean_text = clean_text.replace(eng, cyr)
+        # Зүгээр Монгол кириллийн үсэг, тоо, зай, тусгаарлагч үлдээх
+        clean_text = re.sub(r'[^0-9А-ЯӨҮ\s\-]', '', upper_text)
         
         # Монгол дугаарын pattern check
         match = self.plate_pattern.search(clean_text)
