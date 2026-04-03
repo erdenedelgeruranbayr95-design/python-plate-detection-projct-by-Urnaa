@@ -1,0 +1,7 @@
+﻿# Ignore local env and training artifacts
+venv/
+.venv/
+__pycache__/
+training/runs/
+*.pt
+*.onnx

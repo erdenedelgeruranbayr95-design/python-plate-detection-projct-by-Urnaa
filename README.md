@@ -177,5 +177,11 @@ pip install pytesseract
 
 ---
 
-**Сүүлийн шинэчлэл**: 2024-04-01  
+**Сүүлийн шинэчлэл**: 2024-04-01
 **Хувилбар**: 1.0
+
+## Local Model Training
+
+Use `TRAINING.md` for full local training steps:
+- YOLOv8 plate detector training
+- TrOCR OCR fine-tuning for `NNNNTTT` Mongolian plate text
